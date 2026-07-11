@@ -18,6 +18,7 @@ The gallery lives on a `*.laravel.cloud` subdomain (`shippedthisweekend.laravel.
 - Laravel 12 + Inertia + React + Tailwind (Laravel official starter kit). **Not Mantine** — Tailwind gives faster, fuller design control for a crafted one-page showcase.
 - Postgres (native on Laravel Cloud).
 - Managed queue (native on Laravel Cloud) for the enrich job.
+- Object storage (`s3` disk) in production for self-stored screenshots.
 - Deploy target: `shippedthisweekend.laravel.cloud`.
 
 ## Data model
@@ -43,15 +44,15 @@ The gallery lives on a `*.laravel.cloud` subdomain (`shippedthisweekend.laravel.
 - `created_at`
 - Unique constraint on `(entry_id, voter_hash)` — short name `votes_entry_voter_unique`.
 
-## Auto-enrich pipeline (the "wow")
+## Auto-enrich pipeline (the "wow") — fully free, no API key
 
-1. On submit, validate + persist entry, dispatch `EnrichEntryJob`.
-2. Job calls **Microlink API** once → returns title, description, OG image, and a live screenshot URL in a single response. No headless Chrome to host on Laravel Cloud.
-3. Persist `title`, `og_image_url`, `screenshot_url`; set `status = live`.
-4. Frontend: card renders a pulsing skeleton immediately, then flips to the real screenshot. Use Inertia deferred props / polling to swap when the job completes.
-5. Failure handling: if Microlink fails, keep whatever we have (title/OG) and skip the screenshot — card still renders, just without the shot. Retry the job a couple of times with backoff.
+Entries are born `live` on submit (instant card). `EnrichEntryJob` then, per entry, once:
+1. **Fetches the page HTML** and parses metadata itself — `og:title`/`<title>` → `title`, `og:image` (resolved to absolute) → `og_image_url`. Free, unlimited, no third party. If the network fetch throws, the job re-throws so the queue retries (`$tries=3`, `$backoff=[10,30]`); parse failures are non-fatal (fall back to `host` title).
+2. **Generates a screenshot once** via **thum.io** (no API key: `https://image.thum.io/get/width/1200/crop/900/{url}`), validates the response is a real PNG (magic-byte check), then **self-stores** the bytes to our own disk (`screenshots/{id}.png`) and sets `screenshot_url = Storage::url(...)`. Because we serve our own copy, gallery views are unlimited/free and thum.io's per-impression limit never bites (hit once per entry, at generation). Screenshot failure is non-fatal — card falls back to `og_image_url`.
 
-Microlink free tier (~50 req/day) is the starting point; if entries flood, bump to a cheap paid tier. Config via env `MICROLINK_API_KEY` (optional on free tier).
+Frontend: card shows a pulsing skeleton while `screenshot_url` is null, then swaps to the stored screenshot via polling (capped at 20 attempts). Born-live + non-fatal enrichment means a card is always visible even if the queue lags or every enrich step fails.
+
+**Config:** `services.screenshot` → `SCREENSHOT_ENDPOINT` (default `https://image.thum.io`) + `SCREENSHOT_DISK`. Local disk = `public`; **production = `s3`** (object storage, so stored screenshots persist across ephemeral Cloud instances). No screenshot API key anywhere.
 
 ## Voting + anti-abuse
 
