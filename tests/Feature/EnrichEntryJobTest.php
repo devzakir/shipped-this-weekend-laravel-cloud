@@ -15,7 +15,7 @@ function makeEntry(): Entry
         'host' => 'demo.laravel.cloud',
         'tagline' => 'demo',
         'author_name' => 'Zakir',
-        'status' => EntryStatus::Pending,
+        'status' => EntryStatus::Live,
     ]);
 }
 
@@ -41,11 +41,13 @@ it('populates title, og image and screenshot from microlink', function () {
         ->and($entry->status)->toBe(EntryStatus::Live);
 });
 
-it('goes live without screenshot when microlink fails', function () {
+it('throws so the queue retries when microlink fails, staying live without a screenshot', function () {
     Http::fake(['api.microlink.io*' => Http::response([], 500)]);
 
     $entry = makeEntry();
-    (new EnrichEntryJob($entry))->handle();
+
+    expect(fn () => (new EnrichEntryJob($entry))->handle())->toThrow(\RuntimeException::class);
+
     $entry->refresh();
 
     expect($entry->screenshot_url)->toBeNull()

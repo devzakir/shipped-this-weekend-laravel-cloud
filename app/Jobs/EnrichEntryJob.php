@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Enums\EntryStatus;
 use App\Models\Entry;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -34,20 +33,22 @@ class EnrichEntryJob implements ShouldQueue
                     'screenshot' => 'true',
                     'meta' => 'true',
                 ]);
-
-            if ($response->successful() && $response->json('status') === 'success') {
-                $data = $response->json('data', []);
-                $this->entry->fill([
-                    'title' => data_get($data, 'title') ?: $this->entry->title,
-                    'og_image_url' => data_get($data, 'image.url') ?: $this->entry->og_image_url,
-                    'screenshot_url' => data_get($data, 'screenshot.url'),
-                ]);
-            }
         } catch (\Throwable $e) {
             report($e);
+
+            throw $e;
         }
 
-        $this->entry->status = EntryStatus::Live;
+        if (! $response->successful() || $response->json('status') !== 'success') {
+            throw new \RuntimeException('Microlink enrich failed for entry '.$this->entry->id);
+        }
+
+        $data = $response->json('data', []);
+        $this->entry->fill([
+            'title' => data_get($data, 'title') ?: $this->entry->title,
+            'og_image_url' => data_get($data, 'image.url') ?: $this->entry->og_image_url,
+            'screenshot_url' => data_get($data, 'screenshot.url'),
+        ]);
         $this->entry->save();
     }
 }
