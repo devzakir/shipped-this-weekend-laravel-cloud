@@ -22,8 +22,3 @@ Route::get('/admin/entries/{entry}/hide', [AdminEntryController::class, 'hide'])
     ->middleware('signed')
     ->name('admin.entries.hide');
 
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::inertia('dashboard', 'dashboard')->name('dashboard');
-});
-
-require __DIR__.'/settings.php';
