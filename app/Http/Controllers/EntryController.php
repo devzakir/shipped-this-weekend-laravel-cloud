@@ -8,9 +8,15 @@ use App\Jobs\EnrichEntryJob;
 use App\Models\Entry;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
 
 class EntryController extends Controller
 {
+    public function create()
+    {
+        return Inertia::render('submit');
+    }
+
     public function store(StoreEntryRequest $request)
     {
         $url = $request->string('url');
@@ -41,7 +47,7 @@ class EntryController extends Controller
 
         EnrichEntryJob::dispatch($entry);
 
-        return redirect()->back()->with('flash', [
+        return redirect()->route('gallery')->with('flash', [
             'submittedEntryId' => $entry->id,
         ]);
     }

@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useRef } from 'react';
 import { EntryCard } from '@/components/entry-card';
 import type { Entry } from '@/types/entry';
@@ -10,6 +10,10 @@ interface Props {
 
 export default function Gallery({ entries, tab }: Props) {
     const pending = entries.some((e) => e.has_pending_shot);
+
+    const { props } = usePage<{ flash?: { submittedEntryId?: number | null } }>();
+    const justSubmitted = props.flash?.submittedEntryId;
+    const submitted = entries.find((e) => e.id === justSubmitted);
 
     const pollCount = useRef(0);
 
@@ -43,6 +47,20 @@ export default function Gallery({ entries, tab }: Props) {
                     <TabLink active={tab === 'top'} href="/?tab=top">Top</TabLink>
                     <TabLink active={tab === 'new'} href="/?tab=new">New</TabLink>
                 </div>
+
+                {submitted && (
+                    <div className="mb-6 rounded-xl border border-orange-200 bg-orange-50 p-4 text-center dark:border-orange-900/40 dark:bg-orange-950/30">
+                        <p className="font-medium">You're live 🎉 Share your card:</p>
+                        <a
+                            className="mt-2 inline-block rounded-lg bg-black px-4 py-2 text-sm font-medium text-white"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`I shipped "${submitted.title ?? submitted.host}" on Laravel Cloud this weekend 🚀`)}&url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.origin : '')}`}
+                        >
+                            Share on X
+                        </a>
+                    </div>
+                )}
 
                 {entries.length === 0 ? (
                     <p className="py-20 text-center text-neutral-400">No entries yet. Be the first.</p>

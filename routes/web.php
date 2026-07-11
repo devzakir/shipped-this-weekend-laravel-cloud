@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [GalleryController::class, 'index'])->name('gallery');
 
+Route::get('/submit', [EntryController::class, 'create'])->name('entries.create');
+
 Route::post('/entries', [EntryController::class, 'store'])
     ->middleware('throttle:10,1')
     ->name('entries.store');
