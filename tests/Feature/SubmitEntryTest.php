@@ -60,3 +60,11 @@ it('rejects a duplicate url', function () {
     $this->post(route('entries.store'), validPayload())
         ->assertSessionHasErrors('url');
 });
+
+it('rejects a url that returns 201 instead of 200', function () {
+    Http::fake(['created.laravel.cloud' => Http::response('created', 201)]);
+
+    $this->post(route('entries.store'), validPayload(['url' => 'https://created.laravel.cloud']))
+        ->assertSessionHasErrors('url');
+    expect(Entry::count())->toBe(0);
+});

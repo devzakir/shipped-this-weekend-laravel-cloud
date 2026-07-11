@@ -19,7 +19,7 @@ class EntryController extends Controller
         // Server-side reachability check.
         $ok = false;
         try {
-            $ok = Http::timeout(10)->get($url)->successful();
+            $ok = Http::timeout(10)->get($url)->status() === 200;
         } catch (\Throwable) {
             $ok = false;
         }
