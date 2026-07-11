@@ -6,6 +6,7 @@ use App\Enums\EntryStatus;
 use App\Http\Requests\StoreEntryRequest;
 use App\Jobs\EnrichEntryJob;
 use App\Models\Entry;
+use App\Support\Seo;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -14,7 +15,13 @@ class EntryController extends Controller
 {
     public function create()
     {
-        return Inertia::render('submit');
+        return Inertia::render('submit', [
+            'seo' => Seo::page(
+                'Submit Your App — Shipped This Weekend',
+                'Shipped a project on Laravel Cloud this weekend? Add your laravel.cloud URL to the gallery, get an auto-generated card, and collect upvotes.',
+                '/submit',
+            ),
+        ]);
     }
 
     public function store(StoreEntryRequest $request)

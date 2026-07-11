@@ -34,12 +34,41 @@
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
+        {{-- Server-rendered SEO (crawlers/social scrapers see this without JS) --}}
+        @php
+            $seo = $page['props']['seo'] ?? [];
+            $seoTitle = $seo['title'] ?? config('app.name', 'Shipped This Weekend');
+            $seoDesc = $seo['description'] ?? 'A live gallery of side projects shipped on Laravel Cloud this weekend.';
+            $seoCanonical = $seo['canonical'] ?? url()->current();
+            $seoImage = $seo['image'] ?? (rtrim((string) config('app.url'), '/').'/og-image.png');
+            $seoSite = $seo['siteName'] ?? config('app.name', 'Shipped This Weekend');
+            $seoJsonLd = $seo['jsonLd'] ?? [];
+        @endphp
+        <meta name="description" content="{{ $seoDesc }}">
+        <link rel="canonical" href="{{ $seoCanonical }}">
+        <meta name="theme-color" content="#f97316">
+        <meta property="og:type" content="website">
+        <meta property="og:site_name" content="{{ $seoSite }}">
+        <meta property="og:title" content="{{ $seoTitle }}">
+        <meta property="og:description" content="{{ $seoDesc }}">
+        <meta property="og:url" content="{{ $seoCanonical }}">
+        <meta property="og:image" content="{{ $seoImage }}">
+        <meta property="og:image:width" content="1200">
+        <meta property="og:image:height" content="630">
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:title" content="{{ $seoTitle }}">
+        <meta name="twitter:description" content="{{ $seoDesc }}">
+        <meta name="twitter:image" content="{{ $seoImage }}">
+        @foreach ($seoJsonLd as $schema)
+        <script type="application/ld+json">{!! json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
+        @endforeach
+
         @fonts
 
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
         <x-inertia::head>
-            <title>{{ config('app.name', 'Laravel') }}</title>
+            <title>{{ $seoTitle }}</title>
         </x-inertia::head>
     </head>
     <body class="font-sans antialiased">

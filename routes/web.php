@@ -3,10 +3,13 @@
 use App\Http\Controllers\AdminEntryController;
 use App\Http\Controllers\EntryController;
 use App\Http\Controllers\GalleryController;
+use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\VoteController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [GalleryController::class, 'index'])->name('gallery');
+
+Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 
 Route::get('/submit', [EntryController::class, 'create'])->name('entries.create');
 
