@@ -1,22 +1,22 @@
 # Shipped This Weekend
 
-A public gallery for weekend apps built on **Laravel Cloud**. Paste a `*.laravel.cloud` URL, it auto-enriches into a card (title, description, live screenshot), and the community upvotes the best ones.
+A public gallery for weekend apps built on **Laravel Cloud**. Paste a `*.laravel.cloud` URL, it auto-enriches into a card (title, live screenshot), and the community upvotes the best ones.
 
 Login-free and frictionless by design — no account needed to submit or vote.
 
 ## How it works
 
-1. **Submit** — paste a live `*.laravel.cloud` URL on `/submit`.
-2. **Enrich** — a queued job hits [Microlink](https://microlink.io) to pull the page title, OG description, and a live screenshot.
+1. **Submit** — paste a live `*.laravel.cloud` URL on `/submit`. The entry is born live immediately.
+2. **Enrich** — a queued job self-parses the page's OG metadata (title, `og:image`) and generates a screenshot once via [thum.io](https://www.thum.io), then **self-stores** the image. No paid API, no per-view cost — enrichment is non-fatal, so cards always render.
 3. **Vote** — visitors upvote entries. Browse by **Top** or **New**.
 4. **Moderate** — abusive entries are hidden via a signed admin link (no admin UI to protect).
 
 ## Stack
 
-- **Laravel 12** (framework 13.x) + **Inertia** + **React 19** + **Tailwind 4** — official Laravel React starter kit
-- **SQLite** for local dev, **Postgres** in production (Laravel Cloud)
-- **Managed queue** for the `EnrichEntryJob` enrichment worker
-- **Microlink API** for URL metadata + screenshots
+- **Laravel** (framework 13.x) + **Inertia** + **React 19** + **Tailwind 4** — official Laravel React starter kit
+- **SQLite** for local dev, **Cloudflare D1** in production (via `ntanduy/cloudflare-d1-database`, REST mode)
+- **Database queue** for the `EnrichEntryJob` enrichment worker
+- **thum.io** for one-time screenshot generation; OG metadata parsed in-app (no key)
 
 ## Local setup
 
@@ -30,6 +30,7 @@ npm install
 cp .env.example .env
 php artisan key:generate
 php artisan migrate --seed
+php artisan storage:link   # serve self-stored screenshots from the public disk
 
 # terminal 1
 php artisan queue:work
@@ -37,7 +38,32 @@ php artisan queue:work
 composer dev   # serves app + vite
 ```
 
-Set `MICROLINK_API_KEY` in `.env` for enrichment (falls back to the free tier if unset — rate-limited).
+Local dev uses SQLite and the `public` filesystem disk — no API keys required. `SCREENSHOT_ENDPOINT` defaults to `https://image.thum.io`.
+
+## Production (Laravel Cloud + Cloudflare D1)
+
+The database is **Cloudflare D1**, accessed over its REST API — local stays SQLite, D1 is production-only. Set these in the Laravel Cloud environment:
+
+```
+DB_CONNECTION=d1
+CLOUDFLARE_TOKEN=            # Cloudflare API token with D1:Edit
+CLOUDFLARE_ACCOUNT_ID=
+CLOUDFLARE_D1_DATABASE_ID=
+
+SESSION_DRIVER=cookie        # keep sessions/cache off D1 (avoids per-request HTTP)
+CACHE_STORE=file
+QUEUE_CONNECTION=database     # jobs table on D1 + a queue:work worker
+```
+
+Migrations run over the REST connection:
+
+```bash
+php artisan migrate --database=d1 --force
+```
+
+Deploys are push-to-deploy on `main`. A `queue:work` background worker processes `EnrichEntryJob`.
+
+> **Note:** production screenshots currently store to the ephemeral `public` disk and are regenerated as needed. Moving `SCREENSHOT_DISK` to Cloudflare R2 (S3-compatible) is the planned fix for durable, cross-instance storage.
 
 ## Routes
 
