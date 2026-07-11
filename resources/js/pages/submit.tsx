@@ -16,7 +16,7 @@ export default function Submit() {
 
     return (
         <>
-            <Head title="Submit — Shipped This Weekend" />
+            <Head title="Submit Your App — Shipped This Weekend" />
             <div className="mx-auto max-w-lg px-4 py-12">
                 <h1 className="mb-6 text-2xl font-bold">Submit your weekend ship</h1>
                 <form onSubmit={submit} className="space-y-4">
