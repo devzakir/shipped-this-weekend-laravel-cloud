@@ -73,7 +73,7 @@ class ProfileUpdateTest extends TestCase
 
         $response
             ->assertSessionHasNoErrors()
-            ->assertRedirect(route('home'));
+            ->assertRedirect(route('gallery'));
 
         $this->assertGuest();
         $this->assertNull($user->fresh());
