@@ -17,6 +17,6 @@ class VoterHash
             Cookie::queue('stw_voter', $cookie, 60 * 24 * 365); // 1 year, signed by Laravel
         }
 
-        return hash('sha256', $request->ip() . '|' . $cookie);
+        return hash('sha256', $request->ip().'|'.$cookie);
     }
 }

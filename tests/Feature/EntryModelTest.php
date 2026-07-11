@@ -3,6 +3,7 @@
 use App\Enums\EntryStatus;
 use App\Models\Entry;
 use App\Models\Vote;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -23,10 +24,10 @@ it('creates an entry with defaults and casts status', function () {
 it('enforces unique url', function () {
     Entry::create(['url' => 'https://a.laravel.cloud', 'host' => 'a.laravel.cloud', 'tagline' => 't', 'author_name' => 'z', 'status' => EntryStatus::Live]);
     Entry::create(['url' => 'https://a.laravel.cloud', 'host' => 'a.laravel.cloud', 'tagline' => 't', 'author_name' => 'z', 'status' => EntryStatus::Live]);
-})->throws(Illuminate\Database\QueryException::class);
+})->throws(QueryException::class);
 
 it('blocks duplicate vote for same entry and voter_hash', function () {
     $entry = Entry::create(['url' => 'https://b.laravel.cloud', 'host' => 'b.laravel.cloud', 'tagline' => 't', 'author_name' => 'z', 'status' => EntryStatus::Live]);
     Vote::create(['entry_id' => $entry->id, 'voter_hash' => 'hash1']);
     Vote::create(['entry_id' => $entry->id, 'voter_hash' => 'hash1']);
-})->throws(Illuminate\Database\QueryException::class);
+})->throws(QueryException::class);
