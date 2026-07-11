@@ -116,6 +116,11 @@ class EnrichEntryJob implements ShouldQueue
             return;
         }
 
+        // Validate PNG signature to avoid storing corrupted/error responses
+        if (! str_starts_with($response->body(), "\x89PNG")) {
+            return;
+        }
+
         $disk = config('services.screenshot.disk');
         $path = "screenshots/{$this->entry->id}.png";
 

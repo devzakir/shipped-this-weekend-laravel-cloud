@@ -23,10 +23,16 @@ function makeEntry(): Entry
 
 it('populates title + og image from the page HTML, and stores a screenshot', function () {
     Storage::fake('public');
-    Http::fake([
-        'myapp.laravel.cloud' => Http::response('<html><head><title>Fallback</title><meta property="og:title" content="My Cool App"><meta property="og:image" content="https://cdn/og.png"></head><body>hi</body></html>', 200),
-        'image.thum.io*' => Http::response('PNGBYTES', 200),
-    ]);
+    Http::fake(function ($request) {
+        $url = (string) $request->url();
+        if (str_contains($url, 'image.thum.io')) {
+            return Http::response("\x89PNG\r\n\x1a\n" . 'valid png data', 200);
+        }
+        if (str_contains($url, 'myapp.laravel.cloud')) {
+            return Http::response('<html><head><title>Fallback</title><meta property="og:title" content="My Cool App"><meta property="og:image" content="https://cdn/og.png"></head><body>hi</body></html>', 200);
+        }
+        throw new \Exception("Unexpected URL: {$url}");
+    });
 
     $entry = makeEntry();
     (new EnrichEntryJob($entry))->handle();
@@ -42,10 +48,15 @@ it('populates title + og image from the page HTML, and stores a screenshot', fun
 
 it('falls back to <title> when og:title absent', function () {
     Storage::fake('public');
-    Http::fake([
-        'myapp.laravel.cloud' => Http::response('<html><head><title>Just Title</title></head><body>hi</body></html>', 200),
-        'image.thum.io*' => Http::response('PNGBYTES', 200),
-    ]);
+    Http::fake(function ($request) {
+        $url = (string) $request->url();
+        if (str_contains($url, 'image.thum.io')) {
+            return Http::response("\x89PNG\r\n\x1a\n" . 'valid png data', 200);
+        }
+        if (str_contains($url, 'myapp.laravel.cloud')) {
+            return Http::response('<html><head><title>Just Title</title></head><body>hi</body></html>', 200);
+        }
+    });
 
     $entry = makeEntry();
     (new EnrichEntryJob($entry))->handle();
@@ -56,10 +67,15 @@ it('falls back to <title> when og:title absent', function () {
 
 it('stays live with host title when metadata + screenshot both fail', function () {
     Storage::fake('public');
-    Http::fake([
-        'myapp.laravel.cloud' => Http::response('', 200),
-        'image.thum.io*' => Http::response('', 500),
-    ]);
+    Http::fake(function ($request) {
+        $url = (string) $request->url();
+        if (str_contains($url, 'image.thum.io')) {
+            return Http::response('', 500);
+        }
+        if (str_contains($url, 'myapp.laravel.cloud')) {
+            return Http::response('', 200);
+        }
+    });
 
     $entry = makeEntry();
     (new EnrichEntryJob($entry))->handle();
@@ -68,6 +84,29 @@ it('stays live with host title when metadata + screenshot both fail', function (
     expect($entry->title)->toBe($entry->host)
         ->and($entry->screenshot_url)->toBeNull()
         ->and($entry->status)->toBe(EntryStatus::Live);
+});
+
+it('does not store screenshot when thum.io returns non-PNG body despite 200', function () {
+    Storage::fake('public');
+    Http::fake(function ($request) {
+        $url = (string) $request->url();
+        if (str_contains($url, 'image.thum.io')) {
+            return Http::response('<html>rate limited</html>', 200);
+        }
+        if (str_contains($url, 'myapp.laravel.cloud')) {
+            return Http::response('<html><head><title>Parsed Title</title></head><body>hi</body></html>', 200);
+        }
+    });
+
+    $entry = makeEntry();
+    (new EnrichEntryJob($entry))->handle();
+    $entry->refresh();
+
+    expect($entry->title)->toBe('Parsed Title')
+        ->and($entry->screenshot_url)->toBeNull()
+        ->and($entry->status)->toBe(EntryStatus::Live);
+
+    Storage::disk('public')->assertMissing("screenshots/{$entry->id}.png");
 });
 
 it('throws to retry when the page fetch itself errors', function () {
