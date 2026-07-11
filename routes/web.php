@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminEntryController;
 use App\Http\Controllers\EntryController;
 use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\VoteController;
@@ -16,6 +17,10 @@ Route::post('/entries', [EntryController::class, 'store'])
 Route::post('/entries/{entry}/vote', [VoteController::class, 'store'])
     ->middleware('throttle:30,1')
     ->name('entries.vote');
+
+Route::get('/admin/entries/{entry}/hide', [AdminEntryController::class, 'hide'])
+    ->middleware('signed')
+    ->name('admin.entries.hide');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'dashboard')->name('dashboard');
