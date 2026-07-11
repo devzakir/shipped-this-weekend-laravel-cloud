@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\EntryStatus;
 use App\Models\Entry;
+use App\Support\Seo;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -33,9 +34,44 @@ class GalleryController extends Controller
             'has_pending_shot' => $e->screenshot_url === null,
         ]);
 
+        $base = rtrim((string) config('app.url'), '/');
+
+        $jsonLd = [
+            [
+                '@context' => 'https://schema.org',
+                '@type' => 'WebSite',
+                'name' => config('app.name'),
+                'url' => $base.'/',
+                'description' => 'A live gallery of side projects shipped on Laravel Cloud this weekend.',
+            ],
+            [
+                '@context' => 'https://schema.org',
+                '@type' => 'CollectionPage',
+                'name' => config('app.name'),
+                'url' => $base.'/',
+                'about' => 'Side projects shipped on Laravel Cloud',
+                'mainEntity' => [
+                    '@type' => 'ItemList',
+                    'itemListElement' => $entries->take(20)->values()
+                        ->map(fn (array $e, int $i) => [
+                            '@type' => 'ListItem',
+                            'position' => $i + 1,
+                            'name' => $e['title'] ?: $e['host'],
+                            'url' => $e['url'],
+                        ])->all(),
+                ],
+            ],
+        ];
+
         return Inertia::render('gallery', [
             'entries' => $entries,
             'tab' => $tab,
+            'seo' => Seo::page(
+                'Shipped This Weekend — Side Projects Built on Laravel Cloud',
+                'A live gallery of side projects shipped on Laravel Cloud this weekend. Paste your laravel.cloud URL, get an auto-generated card, and collect upvotes from the community.',
+                '/',
+                $jsonLd,
+            ),
         ]);
     }
 }

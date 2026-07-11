@@ -1,0 +1,25 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#0a0a0a"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <!-- brand mark -->
+  <g transform="translate(96,96)">
+    <rect width="96" height="96" rx="21" fill="url(#mark)"/>
+    <path d="M48 23 L70 51 H58.5 V71 H37.5 V51 H26 Z" fill="#ffffff"/>
+  </g>
+  <text x="212" y="168" font-family="Helvetica, Arial, sans-serif" font-size="30" font-weight="600" fill="#fb923c" letter-spacing="1">SHIPPED THIS WEEKEND</text>
+  <text x="96" y="330" font-family="Helvetica, Arial, sans-serif" font-size="82" font-weight="800" fill="#ffffff">Shipped on Laravel Cloud</text>
+  <text x="96" y="424" font-family="Helvetica, Arial, sans-serif" font-size="82" font-weight="800" fill="#ffffff">this weekend.</text>
+  <text x="96" y="500" font-family="Helvetica, Arial, sans-serif" font-size="34" font-weight="400" fill="#a3a3a3">Paste your laravel.cloud URL. Get a card. Collect upvotes.</text>
+  <rect x="96" y="548" width="14" height="14" rx="3" fill="#f97316"/>
+  <text x="122" y="561" font-family="Helvetica, Arial, sans-serif" font-size="26" font-weight="600" fill="#e5e5e5">A live gallery of weekend ships</text>
+  <defs>
+    <radialGradient id="glow" cx="0.85" cy="0.15" r="0.9" gradientUnits="objectBoundingBox">
+      <stop stop-color="#7c2d12" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#0a0a0a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="mark" x1="0" y1="0" x2="96" y2="96" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fb923c"/>
+      <stop offset="1" stop-color="#ea580c"/>
+    </linearGradient>
+  </defs>
+</svg>

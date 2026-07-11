@@ -33,7 +33,7 @@ export default function Gallery({ entries, tab }: Props) {
 
     return (
         <>
-            <Head title="Shipped This Weekend" />
+            <Head title="Shipped This Weekend — Side Projects Built on Laravel Cloud" />
             <div className="mx-auto min-h-screen max-w-6xl px-4 py-10">
                 <header className="mb-8 text-center">
                     <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Shipped on Laravel Cloud this weekend.</h1>
