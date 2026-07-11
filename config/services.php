@@ -35,9 +35,9 @@ return [
         ],
     ],
 
-    'microlink' => [
-        'key' => env('MICROLINK_API_KEY'),
-        'endpoint' => env('MICROLINK_ENDPOINT', 'https://api.microlink.io'),
+    'screenshot' => [
+        'endpoint' => env('SCREENSHOT_ENDPOINT', 'https://image.thum.io'),
+        'disk' => env('SCREENSHOT_DISK', env('FILESYSTEM_DISK', 'public')),
     ],
 
 ];
