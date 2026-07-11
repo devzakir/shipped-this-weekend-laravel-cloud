@@ -15,12 +15,14 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // Faker (fake()) is a dev-only dependency and is absent in production
+        // (composer install --no-dev), so only seed the test user locally.
+        if (app()->environment('local', 'testing')) {
+            User::factory()->create([
+                'name' => 'Test User',
+                'email' => 'test@example.com',
+            ]);
+        }
 
         $this->call(EntrySeeder::class);
     }
