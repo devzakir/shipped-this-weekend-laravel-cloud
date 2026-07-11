@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { EntryCard } from '@/components/entry-card';
 import type { Entry } from '@/types/entry';
 
@@ -11,9 +11,19 @@ interface Props {
 export default function Gallery({ entries, tab }: Props) {
     const pending = entries.some((e) => e.has_pending_shot);
 
+    const pollCount = useRef(0);
+
     useEffect(() => {
         if (!pending) return;
-        const id = setInterval(() => router.reload({ only: ['entries'] }), 3000);
+        pollCount.current = 0;
+        const id = setInterval(() => {
+            pollCount.current++;
+            if (pollCount.current >= 20) {
+                clearInterval(id);
+                return;
+            }
+            router.reload({ only: ['entries'] });
+        }, 3000);
         return () => clearInterval(id);
     }, [pending]);
 
