@@ -21,18 +21,19 @@ class VoteController extends Controller
                 $entry->increment('votes_count');
             });
         } catch (QueryException $e) {
+            if (! $this->isUniqueViolation($e)) {
+                throw $e;
+            }
+
             // Unique violation → already voted. Ignore.
         }
 
-        $response = redirect()->back();
+        return redirect()->back();
+    }
 
-        // Attach the generated cookie (if any) or existing cookie to response
-        if ($cookie = VoterHash::getGeneratedCookie()) {
-            $response->cookie('stw_voter', $cookie, 60 * 24 * 365);
-        } elseif ($cookie = $request->cookie('stw_voter')) {
-            $response->cookie('stw_voter', $cookie, 60 * 24 * 365);
-        }
-
-        return $response;
+    private function isUniqueViolation(QueryException $e): bool
+    {
+        return in_array($e->errorInfo[1] ?? null, [19, 1062], true)
+            || $e->getCode() === '23505';
     }
 }

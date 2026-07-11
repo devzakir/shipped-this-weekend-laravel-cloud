@@ -8,8 +8,6 @@ use Illuminate\Support\Str;
 
 class VoterHash
 {
-    private static ?string $generatedCookie = null;
-
     public static function for(Request $request): string
     {
         $cookie = $request->cookie('stw_voter');
@@ -17,21 +15,8 @@ class VoterHash
         if (! $cookie) {
             $cookie = Str::random(32);
             Cookie::queue('stw_voter', $cookie, 60 * 24 * 365); // 1 year, signed by Laravel
-            self::$generatedCookie = $cookie;
         }
 
         return hash('sha256', $request->ip() . '|' . $cookie);
-    }
-
-    public static function getGeneratedCookie(): ?string
-    {
-        return self::$generatedCookie;
-    }
-
-    public static function getAndClearGeneratedCookie(): ?string
-    {
-        $cookie = self::$generatedCookie;
-        self::$generatedCookie = null;
-        return $cookie;
     }
 }

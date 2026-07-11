@@ -16,7 +16,8 @@ function liveEntry(): Entry
 it('increments vote count on first vote', function () {
     $entry = liveEntry();
 
-    $this->post(route('entries.vote', $entry))->assertRedirect();
+    $this->withCookie('stw_voter', 'fixed-voter-value')
+        ->post(route('entries.vote', $entry))->assertRedirect();
 
     expect($entry->fresh()->votes_count)->toBe(1);
 });
@@ -24,14 +25,13 @@ it('increments vote count on first vote', function () {
 it('does not double-count the same voter', function () {
     $entry = liveEntry();
 
-    // First vote
-    $this->post(route('entries.vote', $entry));
+    // Same cookie on both requests, simulating a real browser resending its
+    // stw_voter cookie — no backdoor needed.
+    $this->withCookie('stw_voter', 'fixed-voter-value')
+        ->post(route('entries.vote', $entry));
 
-    // Second vote - get the generated cookie and pass it manually
-    // (simulating what the test client should do automatically)
-    $cookie = \App\Support\VoterHash::getGeneratedCookie();
-    $this->withCookie('stw_voter', $cookie ?? '')
-        ->post(route('entries.vote', $entry)); // same session/cookie + IP
+    $this->withCookie('stw_voter', 'fixed-voter-value')
+        ->post(route('entries.vote', $entry)); // same cookie + IP
 
     expect($entry->fresh()->votes_count)->toBe(1)
         ->and($entry->votes()->count())->toBe(1);
