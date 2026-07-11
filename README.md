@@ -53,6 +53,15 @@ CLOUDFLARE_D1_DATABASE_ID=
 SESSION_DRIVER=cookie        # keep sessions/cache off D1 (avoids per-request HTTP)
 CACHE_STORE=file
 QUEUE_CONNECTION=database     # jobs table on D1 + a queue:work worker
+
+# Screenshots persist on Cloudflare R2 (S3-compatible) so they survive
+# redeploys and are shared across instances.
+SCREENSHOT_DISK=r2
+R2_ACCESS_KEY_ID=
+R2_SECRET_ACCESS_KEY=
+R2_BUCKET=
+R2_ENDPOINT=                 # https://<account_id>.r2.cloudflarestorage.com
+R2_PUBLIC_URL=               # bucket public r2.dev URL or custom domain
 ```
 
 Migrations run over the REST connection:
@@ -63,7 +72,7 @@ php artisan migrate --database=d1 --force
 
 Deploys are push-to-deploy on `main`. A `queue:work` background worker processes `EnrichEntryJob`.
 
-> **Note:** production screenshots currently store to the ephemeral `public` disk and are regenerated as needed. Moving `SCREENSHOT_DISK` to Cloudflare R2 (S3-compatible) is the planned fix for durable, cross-instance storage.
+> **Screenshots:** stored on **Cloudflare R2** in production (`SCREENSHOT_DISK=r2`, see the `r2` disk in `config/filesystems.php`) for durable, cross-instance storage. Local dev uses the `public` disk. Enrichment is non-fatal, so a card renders even if a screenshot is missing (it falls back to the parsed `og:image`).
 
 ## Routes
 
