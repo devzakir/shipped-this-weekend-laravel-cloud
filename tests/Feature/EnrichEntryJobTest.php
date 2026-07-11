@@ -46,6 +46,26 @@ it('populates title + og image from the page HTML, and stores a screenshot', fun
     Storage::disk('public')->assertExists("screenshots/{$entry->id}.png");
 });
 
+it('stores the screenshot on the configured disk (e.g. r2 in production)', function () {
+    config(['services.screenshot.disk' => 'r2']);
+    Storage::fake('r2');
+    Http::fake(function ($request) {
+        $url = (string) $request->url();
+        if (str_contains($url, 'image.thum.io')) {
+            return Http::response("\x89PNG\r\n\x1a\n".'valid png data', 200);
+        }
+
+        return Http::response('<html><head><title>On R2</title></head><body>hi</body></html>', 200);
+    });
+
+    $entry = makeEntry();
+    (new EnrichEntryJob($entry))->handle();
+    $entry->refresh();
+
+    Storage::disk('r2')->assertExists("screenshots/{$entry->id}.png");
+    expect($entry->screenshot_url)->not->toBeNull();
+});
+
 it('falls back to <title> when og:title absent', function () {
     Storage::fake('public');
     Http::fake(function ($request) {
